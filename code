@@ -89,3 +89,38 @@ df.test.full <- subset(df.test.full, split == T)
 Final <- data.frame(1:268,df.test.full$PassengerId,predicted)
 write.csv(file = "FinalTitanic", x = Predictions)
 
+
+
+pl <- ggplot(df.train,aes(x = Sex, fill = factor(Fare, levels= seq(from =0, to = 500, by= 50)))+ geom_bar()
+
+print(pl)
+fare.amount <- function(fare){
+  out <- fare
+  for (i in 1:length(fare)){
+    if (i <= 50){
+      out[i]<- 'Extremely Low'
+    } else if (i > 50 & i <= 100){
+      out[i]<- 'Low - 100'
+    }else if (i > 100 & i <= 150){
+      out[i]<- 'Low  100-150'
+    }else if (i > 150 & i <= 200){
+      out[i]<- 'Low 150-200'
+    }else if (i > 200 & i <= 250){
+      out[i]<- 'Med 200-250'
+    }else if (i > 250 & i <= 300){
+      out[i]<- 'Med 250-300'
+    }else if (i > 300 & i <= 350){
+      out[i]<- 'Med 300-350'
+    }else if (i > 350 & i <= 400){
+      out[i]<- 'Big 350-400'
+    }else if (i > 400 & i <= 450){
+      out[i]<- 'Big 400-450'
+    }else if (i > 450 & i <= 515){
+      out[i]<- 'Extremely Big'
+    }else {out[i] <- ''
+    }
+  }
+  return(out)
+}
+
+
