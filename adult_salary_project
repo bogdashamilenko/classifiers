@@ -17,18 +17,14 @@ df1$type_employer <- df1$type_employer %>%
   fct_collapse(Unemployed = c('Never-worked','Without-pay'))
 
 #Second through creating a custom function
-df$type_employer <- as.character(df$type_employer)
-
-merg.empl <- function(type_employer){
-  out <- type_employer
-  for (i in 1: length(type_employer)) {
-    if ( out[i] == 'Never-worked' ){
-      i == 'Unemployed'
-    }else if ( out[i] == 'Without-pay' ){
-      i == 'Unemployed'
+merg.empl <- function(job){
+  job <- as.character(job)
+    if ( job == 'Never-worked'|job == 'Without-pay' ){
+      return('Unemployed')
     }else{
-      out [i] <- type_employer[i]
+      return(job)
     }
-  return(out)
   }
-}
+
+types <- sapply(df$type_employer,merg.empl)
+df1$type_employer <- as.factor(types)
