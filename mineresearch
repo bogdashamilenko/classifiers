@@ -1,0 +1,70 @@
+df.train <-read.csv('titanic_train.csv')
+df.test <-read.csv('titanic_test.csv')
+library(dplyr)
+library(ggplot2)
+library(Amelia)
+#Getting rid of columns which are not used in my analysis 
+df.train <- select(df.train,- Name, - Ticket, -Cabin, - Embarked)
+df.test <- select(df.test, - Name, - Ticket, -Cabin, - Embarked)
+#Data Exploratory Analysis
+#To see the distribution of survived Vs sunk people by fare tey paid, let`s categorize it 
+df.train$categ <- cut(df.train$Fare,10, labels = c('Extremely Low',
+              'Low - 100','Low  100-150','Low 150-200','Med 200-250',
+              'Med 250-300','Med 300-350','Big 350-400','Big 400-450',
+              'Extremely Big'))
+df.train$categ <- as.factor(df.train$categ)
+#Plotting
+pl <- ggplot(df.train,aes(x = categ)) + 
+  stat_count(aes(fill = factor(df.train$Survived))) +
+  ggtitle("Fare & Survived")+
+  xlab("Fare category") +
+  ylab("Count of tickets per category") +
+  labs(fill = "Survived")
+print(pl)
+#As it can be seen the biggist majority of people have paid less that $150 per ticket
+#Let`s set custom  intervals and see the proportion of survived people per each fare category
+#The interval till 105 is $15, than we increase it as n of tickets per category is too small
+df.train$newcat <- cut(df.train$Fare, breaks = c(-1, 7.5, 15,30,45,60,75,90,105,120,150,250,515)) 
+                       
+df.train$newcat <- as.factor(df.train$newcat)
+
+
+pl1 <- ggplot(df.train,aes(x = newcat)) + 
+  stat_count(aes(fill = factor(df.train$Survived))) +
+  ggtitle("Fare Category & Survived")+
+  xlab("Fare category") +
+  ylab("Count of tickets per category") +
+  labs(fill = "Survived")
+print(pl1)
+#As it can be seen, more than 400 tickets had the price 0-15 dollars and this category
+#is not likely to survive. With the grow of fare, the chances to survive grow too!
+#We miss the data in column Age, so lets assign the age based on the avg age of each price category
+pl2 <- missmap(df.train, main="Titanic Training Data - Missings Map", 
+               col=c("yellow", "black"), legend=FALSE)
+print(pl2)
+
+pl3 <- ggplot(df.train,aes(newcat,Age)) + geom_boxplot(aes(fill = newcat)) +  
+  scale_y_continuous(breaks = seq(0,80,2))
+
+sub.age <- function(age,class){
+  out <- age
+  for (i in 1:length(age)){
+    
+    if (is.na(age[i])){
+      
+      if (class[i] == 1){
+        out[i] <- 37
+        
+      }else if (class[i] == 2){
+        out[i] <- 29
+      }else{
+        out[i] <- 24
+      }
+    }else{
+      out[i]<-age[i]
+    }
+  }
+  return(out)
+}
+
+df.train$Age <- sub.age(df.train$Age,df.train$Pclass)
