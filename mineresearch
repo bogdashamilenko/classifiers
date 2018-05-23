@@ -103,3 +103,11 @@ lr <- predict(lr.model, df.test, type = 'response')
 results <- ifelse(lr > 0.5,1,0)
 testerror <- mean(results != df.test$Survived)
 print(paste('Accuracy',1-testerror))
+
+df.train$categ <- NULL
+df.train$newcat <- NULL
+lda.fit <- lda(Survived~., data = df.train )
+
+qda.fit <- qda(Survived ~., data= df.train, type = 'responce')
+qda.class <- predict(qda.fit,df.test)$class
+table(qda.class,df.test$Survived)
