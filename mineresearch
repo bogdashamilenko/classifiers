@@ -6,7 +6,6 @@ library(Amelia)
 #Getting rid of columns which are not used in my analysis 
 df.train <- select(df.train,- Name, - Ticket, -Cabin, - Embarked)
 df.test <- select(df.test, - Name, - Ticket, -Cabin, - Embarked)
-#Data Exploratory Analysis
 #To see the distribution of survived Vs sunk people by fare tey paid, let`s categorize it 
 df.train$categ <- cut(df.train$Fare,10, labels = c('Extremely Low',
               'Low - 100','Low  100-150','Low 150-200','Med 200-250',
@@ -39,26 +38,44 @@ print(pl1)
 #As it can be seen, more than 400 tickets had the price 0-15 dollars and this category
 #is not likely to survive. With the grow of fare, the chances to survive grow too!
 #We miss the data in column Age, so lets assign the age based on the avg age of each price category
-pl2 <- missmap(df.train, main="Titanic Training Data - Missings Map", 
-               col=c("yellow", "black"), legend=FALSE)
-print(pl2)
-
 pl3 <- ggplot(df.train,aes(newcat,Age)) + geom_boxplot(aes(fill = newcat)) +  
   scale_y_continuous(breaks = seq(0,80,2))
+print(pl3)
+#Now we will finf out the avg Age for each group of fare paid and assign it to NA values
+aggregate(df.train$Age, list(df.train$newcat), mean)
 
-sub.age <- function(age,class){
+impute_age <- function(age,newcat){
   out <- age
   for (i in 1:length(age)){
     
     if (is.na(age[i])){
       
-      if (class[i] == 1){
-        out[i] <- 37
+      if (newcat[i] == "(-1,7.5]" ){
+        out[i] <- 27
         
-      }else if (class[i] == 2){
-        out[i] <- 29
+      }else if (newcat[i] == "(7.5,15]"){
+        out[i] <- 28
+      }
+      else if (newcat[i] == "(15,30]"){
+        out[i] <- 28
+      }else if (newcat[i] == "(30,45]"){
+        out[i] <- 27
+      }else if (newcat[i] == "(45,60]"){
+        out[i] <- 32
+      }else if (newcat[i] == "(60,75]" ){
+        out[i] <- 31
+      }else if (newcat[i] == "(75,90]"){
+        out[i] <- 38
+      }else if (newcat[i] == "(90,105]"){
+        out[i] <- 32
+      }else if (newcat[i] == "(105,120]"){
+        out[i] <- 30
+      }else if (newcat[i] == "(120,150]"){
+        out[i] <- 37
+      }else if (newcat[i] == "(150,250]"){
+        out[i] <- 30
       }else{
-        out[i] <- 24
+        out[i] <- 31
       }
     }else{
       out[i]<-age[i]
@@ -67,4 +84,11 @@ sub.age <- function(age,class){
   return(out)
 }
 
-df.train$Age <- sub.age(df.train$Age,df.train$Pclass)
+fixed.ages <- impute_age(df.train$Age,df.train$Pclass)
+df.train$Age <- fixed.ages
+
+pl2 <- missmap(df.train, main="Titanic Training Data - Missings Map", 
+               col=c("yellow", "black"), legend=FALSE)
+print(pl2)
+
+lr.model <- glm(Survived~. - categ,-PassengerId, -Parch, data = df.train)
