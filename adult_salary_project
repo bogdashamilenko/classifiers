@@ -1,0 +1,34 @@
+df <- read.csv('adult_sal.csv')
+df1 <- read.csv('adult_sal.csv')
+
+library(dplyr)
+library(ggplot2)
+library(Amelia)
+library(MASS)
+
+df <- dplyr::select(df,-X)
+str(df)
+summary(df)
+table(df$type_employer)
+
+#Let`s gather a few small factors in bigger groups
+#First way to do this 
+df1$type_employer <- df1$type_employer %>% 
+  fct_collapse(Unemployed = c('Never-worked','Without-pay'))
+
+#Second through creating a custom function
+df$type_employer <- as.character(df$type_employer)
+
+merg.empl <- function(type_employer){
+  out <- type_employer
+  for (i in 1: length(type_employer)) {
+    if ( out[i] == 'Never-worked' ){
+      i == 'Unemployed'
+    }else if ( out[i] == 'Without-pay' ){
+      i == 'Unemployed'
+    }else{
+      out [i] <- type_employer[i]
+    }
+  return(out)
+  }
+}
