@@ -3,9 +3,10 @@ df.test <-read.csv('titanic_test.csv')
 library(dplyr)
 library(ggplot2)
 library(Amelia)
+library(MASS)
 #Getting rid of columns which are not used in my analysis 
-df.train <- select(df.train,- Name, - Ticket, -Cabin, - Embarked)
-df.test <- select(df.test, - Name, - Ticket, -Cabin, - Embarked)
+df.train <- df.train %>% dplyr::select(-Name, -Ticket, -Cabin, -Embarked)
+df.test <- df.test %>% dplyr::select(-Name, -Ticket, -Cabin, -Embarked)
 #To see the distribution of survived Vs sunk people by fare tey paid, let`s categorize it 
 df.train$categ <- cut(df.train$Fare,10, labels = c('Extremely Low',
               'Low - 100','Low  100-150','Low 150-200','Med 200-250',
