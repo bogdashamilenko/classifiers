@@ -12,6 +12,11 @@ df.train$categ <- cut(df.train$Fare,10, labels = c('Extremely Low',
               'Med 250-300','Med 300-350','Big 350-400','Big 400-450',
               'Extremely Big'))
 df.train$categ <- as.factor(df.train$categ)
+df.test$categ <- cut(df.test$Fare,10, labels = c('Extremely Low',
+                                                   'Low - 100','Low  100-150','Low 150-200','Med 200-250',
+                                                   'Med 250-300','Med 300-350','Big 350-400','Big 400-450',
+                                                   'Extremely Big'))
+df.test$categ <- as.factor(df.test$categ)
 #Plotting
 pl <- ggplot(df.train,aes(x = categ)) + 
   stat_count(aes(fill = factor(df.train$Survived))) +
@@ -24,8 +29,10 @@ print(pl)
 #Let`s set custom  intervals and see the proportion of survived people per each fare category
 #The interval till 105 is $15, than we increase it as n of tickets per category is too small
 df.train$newcat <- cut(df.train$Fare, breaks = c(-1, 7.5, 15,30,45,60,75,90,105,120,150,250,515)) 
-                       
 df.train$newcat <- as.factor(df.train$newcat)
+
+df.test$newcat <- cut(df.test$Fare, breaks = c(-1, 7.5, 15,30,45,60,75,90,105,120,150,250,515)) 
+df.test$newcat <- as.factor(df.test$newcat)
 
 
 pl1 <- ggplot(df.train,aes(x = newcat)) + 
@@ -44,7 +51,7 @@ print(pl3)
 #Now we will finf out the avg Age for each group of fare paid and assign it to NA values
 aggregate(df.train$Age, list(df.train$newcat), mean)
 
-impute_age <- function(age,newcat){
+new.age <- function(age,newcat){
   out <- age
   for (i in 1:length(age)){
     
@@ -84,11 +91,15 @@ impute_age <- function(age,newcat){
   return(out)
 }
 
-fixed.ages <- impute_age(df.train$Age,df.train$Pclass)
+fixed.ages <- new.age(df.train$Age,df.train$Pclass)
 df.train$Age <- fixed.ages
 
 pl2 <- missmap(df.train, main="Titanic Training Data - Missings Map", 
                col=c("yellow", "black"), legend=FALSE)
 print(pl2)
 
-lr.model <- glm(Survived~. - categ,-PassengerId, -Parch, data = df.train)
+lr.model <- glm(Survived~. - categ, data = df.train, family= binomial(link='logit'))
+lr <- predict(lr.model, df.test, type = 'response')
+results <- ifelse(lr > 0.5,1,0)
+testerror <- mean(results != df.test$Survived)
+print(paste('Accuracy',1-testerror))
