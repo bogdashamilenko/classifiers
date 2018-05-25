@@ -90,4 +90,22 @@ group_country <- function(ctry){
 }
 df$country <- sapply(df$country,group_country)
 
+# Some values contain '?' so let`s convert them to NA
+#Step 1 for Occupation
+conv.na <- function (occupation){
+  occupation <- as.character(occupation)
+  if (occupation == '?' |occupation == ' ?'){
+    return (NA)
+  }else {
+    return(occupation)
+  }
+  }
+df$occupation <- sapply(df$occupation,conv.na)
+df$occupation <- as.factor(df$occupation)
+#Step 2 for type of employement
+df$type_employer <- sapply(df$type_employer,conv.na)
+df$type_employer <- as.factor(df$type_employer)
 
+pl <- missmap(df, col = c('black','red'))
+#We miss only 1% of our data and it is impossible to assign the occupation or
+#type of employer even approximately, so let`s omit NA values 
