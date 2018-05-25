@@ -5,26 +5,89 @@ library(dplyr)
 library(ggplot2)
 library(Amelia)
 library(MASS)
+library(forcats) 
 
 df <- dplyr::select(df,-X)
-str(df)
-summary(df)
+#str(df)
+#summary(df)
 table(df$type_employer)
 
 #Let`s gather a few small factors in bigger groups
 #First way to do this 
-df1$type_employer <- df1$type_employer %>% 
+df$type_employer <- df$type_employer %>% 
   fct_collapse(Unemployed = c('Never-worked','Without-pay'))
 
-#Second through creating a custom function
+#Second way through creating a custom function
 merg.empl <- function(job){
   job <- as.character(job)
-    if ( job == 'Never-worked'|job == 'Without-pay' ){
-      return('Unemployed')
-    }else{
-      return(job)
-    }
+  if ( job == 'Never-worked'|job == 'Without-pay' ){
+    return('Unemployed')
+  }else{
+    return(job)
   }
+}
 
 types <- sapply(df$type_employer,merg.empl)
-df1$type_employer <- as.factor(types)
+df$type_employer <- as.factor(types)
+
+df$type_employer <- df$type_employer %>% 
+  fct_collapse(SelfEmp = c('Self-emp-inc','Self-emp-not-inc'))
+
+df$type_employer <- df$type_employer %>% 
+  fct_collapse(GovEmp = c('State-gov','Local-gov'))
+#Still working with reducing factors in other Column...
+df$marital <- df$marital %>% 
+  fct_collapse(Married = c('Married-AF-spouse', 'Married-civ-spouse','Married-spouse-absent'))
+
+df$marital <- df$marital %>% 
+  fct_collapse(NotMarried = c('Divorced', 'Separated', 'Widowed'))
+#Let`s work with countries and assign factors by continent 
+
+df$country <- df$country %>% 
+  fct_collapse(Asia = c('China','Hong','India','Iran','Cambodia','Japan', 'Laos' ,
+                        'Philippines' ,'Vietnam' ,'Taiwan', 'Thailand'))
+df$country <- df$country %>% 
+  fct_collapse(Other = c('South'))
+df$country <- df$country %>% 
+  fct_collapse(Europe = c('England' ,'France', 'Germany' ,'Greece','Holand-Netherlands','Hungary',
+                        'Ireland','Italy','Poland','Portugal','Scotland','Yugoslavia'))
+df$country <- df$country %>% 
+  fct_collapse(North.America = c('Canada','United-States','Puerto-Rico' ))
+
+df$country <- df$country %>% 
+  fct_collapse(Latin.South.America = c('Columbia','Cuba','Dominican-Republic','Ecuador',
+                                            'El-Salvador','Guatemala','Haiti','Honduras',
+                                            'Mexico','Nicaragua','Outlying-US(Guam-USVI-etc)','Peru',
+                                            'Jamaica','Trinadad&Tobago') )
+
+#OR WE CAN DO THROUGH THE CUSTOM FUNCTION
+Asia <- c('China','Hong','India','Iran','Cambodia','Japan', 'Laos' ,
+          'Philippines' ,'Vietnam' ,'Taiwan', 'Thailand')
+
+North.America <- c('Canada','United-States','Puerto-Rico' )
+
+Europe <- c('England' ,'France', 'Germany' ,'Greece','Holand-Netherlands','Hungary',
+            'Ireland','Italy','Poland','Portugal','Scotland','Yugoslavia')
+
+Latin.and.South.America <- c('Columbia','Cuba','Dominican-Republic','Ecuador',
+                             'El-Salvador','Guatemala','Haiti','Honduras',
+                             'Mexico','Nicaragua','Outlying-US(Guam-USVI-etc)','Peru',
+                            'Jamaica','Trinadad&Tobago')
+Other <- c('South')
+
+group_country <- function(ctry){
+    if (ctry %in% Asia){
+        return('Asia')
+    }else if (ctry %in% North.America){
+        return('North.America')
+    }else if (ctry %in% Europe){
+        return('Europe')
+    }else if (ctry %in% Latin.and.South.America){
+        return('Latin.and.South.America')
+    }else{
+        return('Other')      
+    }
+}
+df$country <- sapply(df$country,group_country)
+
+
