@@ -109,3 +109,10 @@ df$type_employer <- as.factor(df$type_employer)
 pl <- missmap(df, col = c('black','red'))
 #We miss only 1% of our data and it is impossible to assign the occupation or
 #type of employer even approximately, so let`s omit NA values 
+df <- na.omit(df)
+miss.pl2 <- missmap(df, col = c('black','red'))
+#No NA values so we may continue with:
+#Exploratory Data Analysis
+#Basic interacive graph  
+pl <- ggplot(df, aes(age)) + geom_histogram(aes(color = as.factor(income), fill= 'blue'),binwidth = 1)
+pl2<- ggplotly(pl)
