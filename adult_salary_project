@@ -114,5 +114,16 @@ miss.pl2 <- missmap(df, col = c('black','red'))
 #No NA values so we may continue with:
 #Exploratory Data Analysis
 #Basic interacive graph  
-pl <- ggplot(df, aes(age)) + geom_histogram(aes(color = as.factor(income), fill= 'blue'),binwidth = 1)
+pl <- ggplot(df, aes(age)) + 
+   geom_histogram(aes(fill = income),color= 'black',binwidth = 1,show.legend = T,size = 0.15)+
+   theme_gray()+ labs( title = 'Comparison of salary by the age')+ 
+   scale_x_continuous(breaks = seq(0,88,by=4))
 pl2<- ggplotly(pl)
+
+pl3 <- ggplot(df,aes(hr_per_week))+geom_histogram(binwidth= 4)+
+        scale_x_continuous(breaks = seq(0,100,by=4))
+colnames(df)[colnames(df)=='country'] <- 'region'
+
+pl4 <- ggplot(df,aes(x=region)) + stat_count(aes(fill=income),alpha= 0.6,color='black')+theme_grey()+
+        theme(axis.text.x = element_text(angle = 90)) + coord_flip() + 
+        scale_y_continuous(breaks = seq(0,40000,4000)) + xlab('Name of Region')
