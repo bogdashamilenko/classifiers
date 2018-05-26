@@ -144,3 +144,36 @@ set.seed(123)
 sample = sample.split(df, SplitRatio = 0.8)
 train = subset(df, sample == TRUE)
 test  = subset(df, sample == FALSE)
+
+#Bilding a Logic Regression
+glm.fit <- glm(income ~.,train,family= binomial(logit))
+new.glm <- step(glm.fit)
+test$predicted <- predict(glm.fit,newdata = test, type = 'response')
+table(test$income,test$predicted>0.5)
+Accuracy.Glm <- round((4229+952)/(6144),4)
+Sensitivity.Glm <- round(952/(952+631),4)
+Specificity.Glm <- round(4229/(4229+332),4)
+#Perfoming a Linear Quadratic Analysis
+lda.fit <- lda(income~.,train,family=binomial(logit))
+lda.predict <- predict(lda.fit,test,type='response')
+lda.class <- lda.predict$class
+table(lda.class,test$income)
+Accuracy.Lda <- round((4208+880)/(6144),4)
+#Another optional way to calculate Accuracy 
+#Accuracy2 <- 1 - mean(lda.class != test$income)
+Sensitivity.Lda <- round(880/(880+353),4)
+Specificity.Lda <- round(4208/(4208+703),4)
+
+#qda.fit <- qda(income~.,train)
+#Error in qda.default(x, grouping, ...) : rank deficiency in group <=50K
+#This means that this data cannot be trained applying this classifier
+
+#test1 <- test %>% dplyr::select(-predicted)
+#knn.predict <- knn(train,test1,train.income,k=1)
+#Error in knn(train, test1, train.income, k = 1) : NA/NaN/Inf in foreign function call (arg 6)
+
+#Creating a table that gathers all main measures of our models
+Glm.Model <- c(Accuracy.Glm,Sensitivity.Glm,Specificity.Glm)
+Lda.Model <- c(Accuracy.Lda,Sensitivity.Lda,Specificity.Lda)
+results <- data.frame(row.names=c('Accuracy','Sensitivity','Specificity'), Glm.Model, Lda.Model)
+
