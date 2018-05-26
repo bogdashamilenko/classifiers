@@ -6,6 +6,10 @@ library(ggplot2)
 library(Amelia)
 library(MASS)
 library(forcats) 
+library(forcats) 
+library(plotly)
+library(gtable)
+library(caTools)
 
 df <- dplyr::select(df,-X)
 #str(df)
@@ -35,14 +39,14 @@ df$type_employer <- df$type_employer %>%
 
 df$type_employer <- df$type_employer %>% 
   fct_collapse(GovEmp = c('State-gov','Local-gov'))
+
 #Still working with reducing factors in other Column...
 df$marital <- df$marital %>% 
   fct_collapse(Married = c('Married-AF-spouse', 'Married-civ-spouse','Married-spouse-absent'))
-
 df$marital <- df$marital %>% 
   fct_collapse(NotMarried = c('Divorced', 'Separated', 'Widowed'))
+  
 #Let`s work with countries and assign factors by continent 
-
 df$country <- df$country %>% 
   fct_collapse(Asia = c('China','Hong','India','Iran','Cambodia','Japan', 'Laos' ,
                         'Philippines' ,'Vietnam' ,'Taiwan', 'Thailand'))
@@ -102,10 +106,10 @@ conv.na <- function (occupation){
   }
 df$occupation <- sapply(df$occupation,conv.na)
 df$occupation <- as.factor(df$occupation)
+
 #Step 2 for type of employement
 df$type_employer <- sapply(df$type_employer,conv.na)
 df$type_employer <- as.factor(df$type_employer)
-
 pl <- missmap(df, col = c('black','red'))
 #We miss only 1% of our data and it is impossible to assign the occupation or
 #type of employer even approximately, so let`s omit NA values 
@@ -113,17 +117,30 @@ df <- na.omit(df)
 miss.pl2 <- missmap(df, col = c('black','red'))
 #No NA values so we may continue with:
 #Exploratory Data Analysis
+
 #Basic interacive graph  
 pl <- ggplot(df, aes(age)) + 
    geom_histogram(aes(fill = income),color= 'black',binwidth = 1,show.legend = T,size = 0.15)+
    theme_gray()+ labs( title = 'Comparison of salary by the age')+ 
    scale_x_continuous(breaks = seq(0,88,by=4))
 pl2<- ggplotly(pl)
-
 pl3 <- ggplot(df,aes(hr_per_week))+geom_histogram(binwidth= 4)+
         scale_x_continuous(breaks = seq(0,100,by=4))
 colnames(df)[colnames(df)=='country'] <- 'region'
-
 pl4 <- ggplot(df,aes(x=region)) + stat_count(aes(fill=income),alpha= 0.6,color='black')+theme_grey()+
         theme(axis.text.x = element_text(angle = 90)) + coord_flip() + 
         scale_y_continuous(breaks = seq(0,40000,4000)) + xlab('Name of Region')
+
+#Next step is building a logit model
+#Splitting the data version #1
+set.seed(123)
+smp_size <- floor(0.8 * nrow(df))
+train_ind <- sample(seq_len(nrow(df)), size = smp_size)
+train <- df[train_ind,]
+test <- df[-train_ind,]
+
+#Splitting the data version #2
+set.seed(123)
+sample = sample.split(df, SplitRatio = 0.8)
+train = subset(df, sample == TRUE)
+test  = subset(df, sample == FALSE)
