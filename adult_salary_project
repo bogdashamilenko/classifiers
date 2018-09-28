@@ -145,7 +145,7 @@ sample = sample.split(df, SplitRatio = 0.8)
 train = subset(df, sample == TRUE)
 test  = subset(df, sample == FALSE)
 
-#Bilding a Logic Regression
+#Bilding a Logistic Regression
 glm.fit <- glm(income ~.,train,family= binomial(logit))
 new.glm <- step(glm.fit)
 test$predicted <- predict(glm.fit,newdata = test, type = 'response')
