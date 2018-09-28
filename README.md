@@ -1,2 +1,2 @@
 # classifiers
-Various projects on utilizing different classifiers with distant data.
+Various projects on utilizing different classifiers with distinct datasets.
