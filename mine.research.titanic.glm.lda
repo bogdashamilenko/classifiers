@@ -1,12 +1,17 @@
+#Importing our flat files to R
 df.train <-read.csv('titanic_train.csv')
 df.test <-read.csv('titanic_test.csv')
+
+#Today we will use these four libraries
 library(dplyr)
 library(ggplot2)
 library(Amelia)
 library(MASS)
+
 #Getting rid of columns which are not used in my analysis 
 df.train <- df.train %>% dplyr::select(-Name, -Ticket, -Cabin, -Embarked)
 df.test <- df.test %>% dplyr::select(-Name, -Ticket, -Cabin, -Embarked)
+
 #To see the distribution of survived Vs sunk people by fare tey paid, let`s categorize it 
 df.train$categ <- cut(df.train$Fare,10, labels = c('Extremely Low',
               'Low - 100','Low  100-150','Low 150-200','Med 200-250',
@@ -18,6 +23,7 @@ df.test$categ <- cut(df.test$Fare,10, labels = c('Extremely Low',
                                                    'Med 250-300','Med 300-350','Big 350-400','Big 400-450',
                                                    'Extremely Big'))
 df.test$categ <- as.factor(df.test$categ)
+
 #Plotting
 pl <- ggplot(df.train,aes(x = categ)) + 
   stat_count(aes(fill = factor(df.train$Survived))) +
@@ -26,6 +32,7 @@ pl <- ggplot(df.train,aes(x = categ)) +
   ylab("Count of tickets per category") +
   labs(fill = "Survived")
 print(pl)
+
 #As it can be seen the biggist majority of people have paid less that $150 per ticket
 #Let`s set custom  intervals and see the proportion of survived people per each fare category
 #The interval till 105 is $15, than we increase it as n of tickets per category is too small
@@ -36,15 +43,17 @@ df.test$newcat <- cut(df.test$Fare, breaks = c(-1, 7.5, 15,30,45,60,75,90,105,12
 df.test$newcat <- as.factor(df.test$newcat)
 
 
-pl1 <- ggplot(df.train,aes(x = newcat)) + 
+pl2 <- ggplot(df.train,aes(x = newcat)) + 
   stat_count(aes(fill = factor(df.train$Survived))) +
   ggtitle("Fare Category & Survived")+
   xlab("Fare category") +
   ylab("Count of tickets per category") +
   labs(fill = "Survived")
 print(pl1)
+
 #As it can be seen, more than 400 tickets had the price 0-15 dollars and this category
 #is not likely to survive. With the grow of fare, the chances to survive grow too!
+
 #We miss the data in column Age, so lets assign the age based on the avg age of each price category
 pl3 <- ggplot(df.train,aes(newcat,Age)) + geom_boxplot(aes(fill = newcat)) +  
   scale_y_continuous(breaks = seq(0,80,2))
@@ -52,6 +61,9 @@ print(pl3)
 #Now we will finf out the avg Age for each group of fare paid and assign it to NA values
 aggregate(df.train$Age, list(df.train$newcat), mean)
 
+#To do that we will need to build a custom function that will assign mean values for each group based on fare paid.
+#This makes sense as ususally people of the same age category will purchase tickes for the same value, though this approach has drawbacks
+#as kids may have a pricey ticket (the same price as their parents) though their age is less. 
 new.age <- function(age,newcat){
   out <- age
   for (i in 1:length(age)){
@@ -91,14 +103,15 @@ new.age <- function(age,newcat){
   }
   return(out)
 }
-
 fixed.ages <- new.age(df.train$Age,df.train$Pclass)
 df.train$Age <- fixed.ages
 
+#Let`s check if our function worked and if we have any missing values 
 pl2 <- missmap(df.train, main="Titanic Training Data - Missings Map", 
                col=c("yellow", "black"), legend=FALSE)
 print(pl2)
 
+#Great, so our datasets now prepared for building a model, after that we will get a test error and our accuracy.
 lr.model <- glm(Survived~. - categ, data = df.train, family= binomial(link='logit'))
 lr <- predict(lr.model, df.test, type = 'response')
 results <- ifelse(lr > 0.5,1,0)
@@ -112,3 +125,6 @@ lda.fit <- lda(Survived~., data = df.train )
 qda.fit <- qda(Survived ~., data= df.train, type = 'responce')
 qda.class <- predict(qda.fit,df.test)$class
 table(qda.class,df.test$Survived)
+#Comparing to my glm model that run in another say, lda and qda didn`t performed better. I would link this to such fact that glm does not 
+#need to have a Gaussian distribution. 
+
