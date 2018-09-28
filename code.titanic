@@ -4,11 +4,17 @@ df.test <-read.csv('titanic_test.csv')
 library(dplyr)
 library(Amelia)
 
-pl4 <- ggplot(df.train,aes(Age)) + geom_histogram(fill='blue',bins=20,alpha=0.5)
-pl3 <- ggplot(df.train,aes(Pclass)) + geom_bar(aes(fill=factor(Pclass)),alpha=0.5)
+#Performing EDA to get acquainted with dataset 
 pl <- ggplot(df.train,aes(Pclass,Age)) + geom_boxplot(aes(group=Pclass,fill=factor(Pclass),alpha=0.4)) 
 pl2 <- pl + scale_y_continuous(breaks = seq(min(0), max(80), by = 2))
+pl3 <- ggplot(df.train,aes(Pclass)) + geom_bar(aes(fill=factor(Pclass)),alpha=0.5)
+pl4 <- ggplot(df.train,aes(Age)) + geom_histogram(fill='blue',bins=20,alpha=0.5)
+pl5 <- ggplot(df.train,aes(x = Sex, fill = factor(Fare, levels= seq(from =0, to = 500, by= 50)))+ geom_bar()
 
+
+#Working with missing values in variable Age
+missmap(df.train, main="Titanic Training Data - Missings Map", 
+        col=c("yellow", "black"), legend=FALSE)
 impute_age <- function(age,class){
   out <- age
   for (i in 1:length(age)){
@@ -30,37 +36,35 @@ impute_age <- function(age,class){
   }
   return(out)
 }
-
 fixed.ages <- impute_age(df.train$Age,df.train$Pclass)
 df.train$Age <- fixed.ages
 
-missmap(df.train, main="Titanic Training Data - Missings Map", 
-        col=c("yellow", "black"), legend=FALSE)
-
+#Removing variables that would not be used in the model
 df.train <- select(df.train,-PassengerId,  - Name, - Ticket, -Cabin, - Embarked)
 df.test <- select(df.test,-PassengerId, - Name, - Ticket, -Cabin, - Embarked)
 
+#Changing variable to factors 
 df.train$Survived <- factor(df.train$Survived)
 df.train$Pclass <- factor(df.train$Pclass)
 df.train$Parch <- factor(df.train$Parch)
-
 df.test$Pclass <- factor(df.test$Pclass)
 df.test$Parch <- factor(df.test$Parch)
 
-
-log.model <- glm(Survived ~., data = df.train, family = binomial(link = 'logit'))
-
-
+#Performing glm on the same dataset with different split ratio
 library(caTools)
 set.seed(101)
 split <- sample.split(df.train$Survived, SplitRatio = 0.7)
 final.train <- subset(df.train, split == T)
 final.test <- subset(df.train, split == F)
+log.model <- glm(Survived ~., data = df.train, family = binomial(link = 'logit'))
 final.log.model <- glm(Survived~., family = binomial, data = final.train)
 
+#Getting our results
 predicted <- predict(final.log.model,final.test,type = 'response')
 fitted.res <- ifelse(predicted > 0.5, 1,0)
 
+#Let`s build our confusion matrix and see how well we performed. 
+#We will set 3 various thresholds to see which one works better in our situation
 table(final.test$Survived,predicted>0.3)
 accuracy30 <- (84+123)/268
 sensitivity30 <- 84/(84+19)
@@ -76,13 +80,14 @@ accuracy50 <- (74+137)/268
 sensitivity50 <- 74/(74+29)
 specificity50 <- 137/(137+28)
 
+#We will put our results in a data frame so it will be easier for us to make a conclusion 
 cat('Parameters for 30%:','Accuracy=',accuracy30, '->', 'Sensitivity=', sensitivity30,'->','Specificity=', specificity30)
 
 cat('Parameters for 40%:','Accuracy=',accuracy40, '->', 'Sensitivity=', sensitivity40,'->','Specificity=', specificity40)
 
 cat('Parameters for 50%:','Accuracy=',accuracy50, '->', 'Sensitivity=', sensitivity50,'->','Specificity=', specificity50)
 
-
+#Getting our csv file with our predictions
 df.test.full <- read.csv('titanic_test.csv')
 set.seed(101)
 df.test.full <- subset(df.test.full, split == T)
@@ -90,9 +95,7 @@ Final <- data.frame(1:268,df.test.full$PassengerId,predicted)
 write.csv(file = "FinalTitanic", x = Predictions)
 
 
-
-pl <- ggplot(df.train,aes(x = Sex, fill = factor(Fare, levels= seq(from =0, to = 500, by= 50)))+ geom_bar()
-
+#Just an example of custom function that separates continious variable to categorical
 print(pl)
 fare.amount <- function(fare){
   out <- fare
